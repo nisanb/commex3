@@ -1,5 +1,7 @@
 package il.ac.haifa.is.datacomms.hw3.serverside;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -29,26 +31,35 @@ public final class RequestHandler implements Runnable {
 	public void run() {
 		Server.log("Initiating client connection handler");
 		try {
-			InputStreamReader IR = new InputStreamReader(this.socket.getInputStream());
-			BufferedReader BR = new BufferedReader(IR);
 
-			DataInputStream in = new DataInputStream(this.socket.getInputStream());
-
+			Server.log("Awaiting input");
+			// DataInputStream streamIn = new DataInputStream(new
+			// BufferedInputStream(this.socket.getInputStream()));
+			DataInputStream streamIn = new DataInputStream(this.socket.getInputStream());
+			DataOutputStream streamOut = new DataOutputStream(this.socket.getOutputStream());
+			// DataOutputStream streamOut = new DataOutputStream(new
+			// BufferedOutputStream(this.socket.getOutputStream()));
 			while (true) {
-				Server.log("Awaiting input");
-
-				String MESSAGE = in.readUTF();
-				
+				String MESSAGE = streamIn.readUTF();
+				// Take care of BR
+				MESSAGE = MESSAGE.replace("\n", "");
 				Server.log("Received Message: " + MESSAGE);
 				String[] tmpMessage = MESSAGE.split(" ");
-				Thread.sleep(3000);
+
+				/** Handle RDY Request **/
+				if (tmpMessage[1].toString().equals("RDY")) {
+					handleReady(tmpMessage, streamOut);
+				}
+
 			}
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// e.printStackTrace();
+			// System.out.println("Tried to accept a message but it was not
+			// successfull!");
+			// Server.log("Closing connection..");
+			// System.out.println("Socket is " + this.socket);
 		}
 
 	}
@@ -66,7 +77,38 @@ public final class RequestHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void handleReady(String[] req, DataOutputStream os) throws IOException {
-		// TODO
+		int ClientID = -1;
+		try {
+			ClientID = Integer.parseInt(req[0]);
+			Server.log("Client " + req[0] + " - received RDY Request");
+
+			// Load character
+			Server.log("Loading character #" + req[0] + " (Num of chars: " + Server.getCharacters().size() + ")");
+			this.character = Server.getCharacters().get(Server.getCharacters().indexOf(new Character(ClientID, "")));
+			if (this.character == null || !Server.addReadyPlayer(ClientID)) {
+				// Character was not found
+				Server.log("Character " + ClientID + " wasn't found!");
+				os.writeUTF("NACK\n");
+				return;
+			}
+
+			
+		
+			
+			Server.log("Sending approval: ACK RDY " + Server.getMonsters().size() + " ? "
+					+ this.character.getHealthPoints());
+			os.writeUTF("ACK RDY " + Server.getMonsters().size() + " ? " + this.character.getHealthPoints());
+		} catch (NumberFormatException nfe) {
+			Server.log("Couldn't retreive client ID!");
+			closeConn();
+		} catch (ArrayIndexOutOfBoundsException aio) {
+			Server.log("Couldn't find character " + ClientID);
+			closeConn();
+		}
+	}
+
+	private void closeConn() throws IOException {
+		socket.close();
 	}
 
 	/**

@@ -48,6 +48,7 @@ public final class Server {
 		initCharacters();
 		log("Initiating players queue..");
 		playersReady = new ArrayList<Integer>();
+		
 		/*
 		 * Initiate Socket
 		 */
@@ -59,7 +60,7 @@ public final class Server {
 				Socket newClient = ss.accept();
 				log("Accepted a new request!");
 				Thread t = new Thread(new RequestHandler(newClient));
-				t.run();
+				t.start();
 			}
 
 		} catch (IOException e) {
@@ -131,7 +132,8 @@ public final class Server {
 	 * @return true is succeeded, false if already in queue.
 	 */
 	public static boolean addReadyPlayer(int id) {
-		// TODO
+		playersReady.add(id);
+		
 		return true;
 	}
 
