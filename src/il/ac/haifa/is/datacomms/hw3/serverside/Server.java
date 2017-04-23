@@ -138,6 +138,14 @@ public final class Server {
 	}
 
 	/**
+	 * Checks whether or not all players are connected and ready
+	 * @return
+	 */
+	public static Boolean isAllReady(){
+		return playersReady.size()==characters.size();
+	}
+	
+	/**
 	 * @return list of monsters in play session.
 	 */
 	public static List<Monster> getMonsters() {

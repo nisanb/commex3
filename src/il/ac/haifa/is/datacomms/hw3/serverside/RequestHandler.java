@@ -16,6 +16,8 @@ public final class RequestHandler implements Runnable {
 	/** socket between server and client. */
 	private Socket socket;
 
+	/** RDY Lock **/
+	private static Object rdyLock = new Object();
 	/** character associated with the connection. */
 	private Character character;
 
@@ -32,23 +34,33 @@ public final class RequestHandler implements Runnable {
 		Server.log("Initiating client connection handler");
 		try {
 
-			Server.log("Awaiting input");
-			// DataInputStream streamIn = new DataInputStream(new
-			// BufferedInputStream(this.socket.getInputStream()));
+	
 			DataInputStream streamIn = new DataInputStream(this.socket.getInputStream());
 			DataOutputStream streamOut = new DataOutputStream(this.socket.getOutputStream());
-			// DataOutputStream streamOut = new DataOutputStream(new
-			// BufferedOutputStream(this.socket.getOutputStream()));
+
 			while (true) {
 				String MESSAGE = streamIn.readUTF();
 				// Take care of BR
-				MESSAGE = MESSAGE.replace("\n", "");
 				Server.log("Received Message: " + MESSAGE);
 				String[] tmpMessage = MESSAGE.split(" ");
 
-				/** Handle RDY Request **/
-				if (tmpMessage[1].toString().equals("RDY")) {
+				switch (tmpMessage[1]) {
+				case "RDY":
 					handleReady(tmpMessage, streamOut);
+					break;
+				case "DMG":
+					handleDamage(tmpMessage, streamOut);
+					break;
+				case "BND":
+					handleBandage(tmpMessage, streamOut);
+					break;
+				case "FIN":
+					handleFin();
+					break;
+
+				default:
+					Server.log("Received unknown protocol message: " + MESSAGE);
+					break;
 				}
 
 			}
@@ -85,16 +97,22 @@ public final class RequestHandler implements Runnable {
 			// Load character
 			Server.log("Loading character #" + req[0] + " (Num of chars: " + Server.getCharacters().size() + ")");
 			this.character = Server.getCharacters().get(Server.getCharacters().indexOf(new Character(ClientID, "")));
-			if (this.character == null || !Server.addReadyPlayer(ClientID)) {
-				// Character was not found
-				Server.log("Character " + ClientID + " wasn't found!");
-				os.writeUTF("NACK\n");
-				return;
+			synchronized (rdyLock) {
+				if (this.character == null || !Server.addReadyPlayer(ClientID)) {
+					// Character was not found
+					Server.log("Character " + ClientID + " wasn't found!");
+					os.writeUTF("NACK \n");
+					return;
+				}
+				if (!Server.isAllReady())
+					rdyLock.wait();
+				else {
+					Server.log("All players are ready! Starting session..");
+					rdyLock.notifyAll();
+				}
+
 			}
 
-			
-		
-			
 			Server.log("Sending approval: ACK RDY " + Server.getMonsters().size() + " ? "
 					+ this.character.getHealthPoints());
 			os.writeUTF("ACK RDY " + Server.getMonsters().size() + " ? " + this.character.getHealthPoints());
@@ -104,6 +122,9 @@ public final class RequestHandler implements Runnable {
 		} catch (ArrayIndexOutOfBoundsException aio) {
 			Server.log("Couldn't find character " + ClientID);
 			closeConn();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

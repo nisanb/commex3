@@ -45,7 +45,12 @@ public class Client implements Runnable {
 			DataInputStream is = new DataInputStream(s.getInputStream());
 			DataOutputStream os = new DataOutputStream(s.getOutputStream());
 			
-			
+			/**
+			 * Client will now load the game
+			 */
+			log("Client "+id+" is loading...");
+			Thread.sleep(3000);
+			log("Client "+id+" is ready!");
 			
 			
 			
@@ -68,6 +73,9 @@ public class Client implements Runnable {
 			log("CLIENT "+id+" IO Exception" + e.getStackTrace());
 			e.printStackTrace();
 			// e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
@@ -86,9 +94,9 @@ public class Client implements Runnable {
 	private int sendReady(DataInputStream is, DataOutputStream os) throws IOException {
 		//Send RDY Request
 		log("Client "+id+" is sending RDY Request");
-		os.writeUTF(id+" RDY\n");
+		os.writeUTF(id+" RDY \n");
 		
-		String[] returned = is.readUTF().replace("\n", "").split(" ");
+		String[] returned = is.readUTF().split(" ");
 		log("Client "+id+" received answer!!");
 		if(returned[0].equals("NACK")) //Message received an error
 			return -1;
