@@ -1,0 +1,104 @@
+	 FLAMES of ARENDHAL PROTOCOL
+							
+		PROTOCOL SPECIFICATION
+
+			April 2017
+
+			prepared for
+								
+Data Communication course - Spring Semester
+Department of Information Systems
+		University of Haifa
+
+				by
+
+			Liza Sorokina
+				&
+			Igal Klebanov
+
+
+	1. Flames of Arendhal Protocol (FAP) is an application layer protocol over TCP that
+	supports communication between multiple game clients and a main server. FoA is a
+	MMO-RPG where players team up in a party of warriors to fight off hordes of monsters.
+	FAP handles the transmission of fighting status and player decisions. clients report 
+	damage attempts on monsters, and server responds with actual damage dealt, and damage
+	from monsters. Character & Monster information are stored on Server, and various 
+	calculations are made server-side.
+	
+	2. After all connected clients are Ready, the server replies with an approval message 
+	containing number of monsters to fight in current play session & character's initial health points.
+	
+	3. Clients start dealing damage to monsters 1-by-1 using Damage requests.
+	
+	4.1. If monster & character were still alive when receiving the request, Server replies with approval message 
+	with monster's health points left & character's health points left (monster sometimes 
+	deals damage back to players).
+	
+	4.2. If monster was dead or character was dead when receiving the request, Server replies with a disapproval message.
+	
+	5. When monster is dead, or disapproval received, Clients move to next monster and repeat.
+
+	6. If character drops below a certain HP point, client sends a Bandage request.
+
+	7.1. If character was alive, and hasn't used all possible bandages, Server responds with approval and character's 
+	current health points.
+
+	7.2. If character was dead or used all possible bandages, Server responds with disapproval and character's current 
+	health points.
+	
+	8. If character died, or all monsters died, a Client closes its 
+	connection to Server, without waiting for acknowledgement.
+	
+	9. When all clients are disconnected, Server shuts down and outputs damage overview.
+	
+	10. Each of the following messages is transferred as a String encoded in UTF,
+	   and its fields are seperated with a ' ' (space) character.
+	
+		10.1 Client Request:
+	
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |          User ID      		  |       		Action	           |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |    (Optional) Monster#  	  |     (Optional) Attack Type     |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   
+		   User ID - User's number.
+		   Action - 'RDY' - User is ready to start fighting.
+					'DMG' - Attempt to deal damage to monster.
+					'BND' - Use Bandage.
+					'FIN' - Disconnect from server.
+		   Monster# - specific monster's number.
+		   Attack Type - 'PHY' - physical attack.
+						 'MAG' - magical attack.
+	
+		10.2	Server Response:
+   
+   		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |          ACK/NACK      	  |       		Action	           |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |    (Optional) Monster#  	  |   (Optional) Monster HP Left   |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   |    (Optional) Character HP Left |
+		   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		   
+		   ACK/NACK - 'ACK' - client's request was handled successfully.
+					  'NACK' - client's request was rejected.
+		   Action - Response to this user action. '?' if unknown (in case of error).
+		   Monster# - specific monster's number, or general number of monsters in play session.
+		   Monster HP Left - Amount of health points left for monster. 0 if dead.
+		   Character HP Left - Amount of health points left for user's character. 0 if dead.
+
+	11.   Examples:
+		11.1 : Ready.
+			"4 RDY"  ->  "ACK RDY 12 ? 400"
+		11.2 : Damage.
+			"4 DMG 2 PHY"  -> 
+			if alive (monster and character) before request: "ACK DMG 2 14057 96"
+			if dead (monster or character) before request: "NACK DMG 2"
+		11.3 : Bandage.
+			"4 BND" -> 
+			if alive and hasn't used all bandages: "ACK BND ? ? 131"
+			if dead: "NACK BND ? ? 0"
+			if used all bandages: "NACK BND ? ? 96"
+		11.4 : Fin.
+			"4 FIN"
