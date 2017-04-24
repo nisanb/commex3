@@ -90,7 +90,24 @@ public class Monster {
 	 * @return true if succeeded, false otherwise (monster already dead).
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
-		// TODO
+		if (!isAlive() || nickname.length()==0 || damage<resist) //In case mob is already alive
+			return false;
+
+		Integer damageToDeal = damage - resist;
+	
+
+		while (damageToDeal > 0)
+			if (getShieldPoints() > 0)
+				damageToDeal -= reduceShieldPoints(damageToDeal);
+			else
+				reduceHealthPoints(damageToDeal);
+
+		
+		//Update hitmap
+		if(damageReceived.containsKey(nickname)){
+			damageReceived.put(nickname, damageReceived.get(nickname)+damageToDeal);
+		} else damageReceived.put(nickname, damageToDeal);
+		
 		return true;
 	}
 
@@ -104,8 +121,15 @@ public class Monster {
 	 *         previous shield points.
 	 */
 	private int reduceShieldPoints(int amount) {
-		// TODO
-		return 0;
+		Integer amountReduced = 0;
+		if (getArmor() - amount > 0)
+			amountReduced = amount;
+		else
+			amountReduced = getArmor();
+
+		setArmor(getArmor() - amountReduced);
+
+		return amountReduced;
 	}
 
 	/**
@@ -116,7 +140,12 @@ public class Monster {
 	 *            amount to be reduced from monster's health points.
 	 */
 	private void reduceHealthPoints(int amount) {
-		// TODO
+		Integer toUpdate = 0;
+		toUpdate = getHealthPoints() - amount;
+		if (toUpdate < 0)
+			toUpdate = 0;
+
+		setHealthPoints(toUpdate);
 
 	}
 

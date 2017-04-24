@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.time.LocalTime;
+import java.util.Random;
 
 import il.ac.haifa.is.datacomms.hw3.util.AttackType;
 import il.ac.haifa.is.datacomms.hw3.util.Consts;
@@ -41,36 +42,42 @@ public class Client implements Runnable {
 		try {
 			s = new Socket(Consts.IP, Consts.PORT);
 			s.setSoTimeout(5000);
-			
+
 			DataInputStream is = new DataInputStream(s.getInputStream());
 			DataOutputStream os = new DataOutputStream(s.getOutputStream());
-			
+
 			/**
 			 * Client will now load the game
 			 */
-			log("Client "+id+" is loading...");
+			log("Client " + id + " is loading...");
 			Thread.sleep(3000);
-			log("Client "+id+" is ready!");
-			
-			
-			
+			log("Client " + id + " is ready!");
+
 			/**
 			 * Send client is ready
 			 */
 			int amountOfMonsters = sendReady(is, os);
-			log("Client "+id+" is able to log in (HP: "+healthPoints+"; Monsters: "+amountOfMonsters+")");
-//			while(amountOfMonsters>0){
-//				/**
-//				 * As long as there are monsters in-game
-//				 */
-//				
-//			}
+			log("Client " + id + " is able to log in (HP: " + healthPoints + "; Monsters: " + amountOfMonsters + ")");
+			Random r = new Random();
+			int currentMob = 0;
+			while (amountOfMonsters > 0 && healthPoints > 0) {
+				/**
+				 * As long as there are monsters in-game
+				 */
+				
+				AttackType attackType = AttackType.values()[r.nextInt(2)];
+				log("Cliet "+id+" is attempting to attack mob "+currentMob+" with "+attackType+" DMG");
+				os.writeUTF(id + " DMG " + currentMob + " " + attackType + " \n");
+
+				Thread.sleep(1000);
+
+			}
 
 			os.close();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			log("CLIENT "+id+" IO Exception" + e.getStackTrace());
+			log("CLIENT " + id + " IO Exception" + e.getStackTrace());
 			e.printStackTrace();
 			// e.printStackTrace();
 		} catch (InterruptedException e) {
@@ -92,18 +99,17 @@ public class Client implements Runnable {
 	 * @throws IOException
 	 */
 	private int sendReady(DataInputStream is, DataOutputStream os) throws IOException {
-		//Send RDY Request
-		log("Client "+id+" is sending RDY Request");
-		os.writeUTF(id+" RDY \n");
-		
+		// Send RDY Request
+		log("Client " + id + " is sending RDY Request");
+		os.writeUTF(id + " RDY \n");
+
 		String[] returned = is.readUTF().split(" ");
-		log("Client "+id+" received answer!!");
-		if(returned[0].equals("NACK")) //Message received an error
+		log("Client " + id + " received answer!!");
+		if (returned[0].equals("NACK")) // Message received an error
 			return -1;
-		
-		
+
 		this.healthPoints = Integer.parseInt(returned[4]);
-		
+
 		return Integer.parseInt(returned[2]);
 	}
 
@@ -156,9 +162,10 @@ public class Client implements Runnable {
 		// TODO
 
 	}
-	
+
 	/**
 	 * Log function
+	 * 
 	 * @param string
 	 */
 	protected static void log(String string) {

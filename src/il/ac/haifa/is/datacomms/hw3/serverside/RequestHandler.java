@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
+import il.ac.haifa.is.datacomms.hw3.util.AttackType;
+
 /**
  * class for handling client requests.
  */
@@ -20,6 +22,10 @@ public final class RequestHandler implements Runnable {
 	private static Object rdyLock = new Object();
 	/** character associated with the connection. */
 	private Character character;
+
+	/** Locks **/
+	// Mob Attack Lock
+	private static Object mobAttackLock = new Object();
 
 	/**
 	 * @param socket
@@ -34,7 +40,6 @@ public final class RequestHandler implements Runnable {
 		Server.log("Initiating client connection handler");
 		try {
 
-	
 			DataInputStream streamIn = new DataInputStream(this.socket.getInputStream());
 			DataOutputStream streamOut = new DataOutputStream(this.socket.getOutputStream());
 
@@ -133,7 +138,9 @@ public final class RequestHandler implements Runnable {
 	}
 
 	/**
-	 * handles DMG Requests from client.
+	 * handles DMG Requests from client. ex: "4 DMG 2 PHY" -> if alive (monster
+	 * and character) before request: "ACK DMG 2 14057 96" if dead (monster or
+	 * character) before request: "NACK DMG 2"
 	 * 
 	 * @param req
 	 *            request message send by client.
@@ -142,7 +149,43 @@ public final class RequestHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void handleDamage(String[] req, DataOutputStream os) throws IOException {
-		// TODO
+		Integer MonsterID = 0;
+		try {
+			Integer ClientID = Integer.parseInt(req[0]);
+			MonsterID = Integer.parseInt(req[2]);
+			AttackType attackType = AttackType.valueOf(req[3]);
+			Monster monAttacked = Server.getMonsters().get(MonsterID);
+			Integer hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
+
+			Boolean attackSuccess = false;
+			synchronized (mobAttackLock) {
+				switch (attackType) {
+				case PHY:
+					attackSuccess = monAttacked.hitWithPhysicalAttack(character);
+					break;
+				case MAG:
+					attackSuccess = monAttacked.hitWithMagicAttack(character);
+					break;
+
+				}
+
+			}
+
+			if (!attackSuccess) {
+				Server.log("Client " + ClientID + " DMG to MOB " + MonsterID + " failed!");
+				os.writeUTF("NACK DMG " + monAttacked.getName() + " \n");
+			} else {
+				Server.log("Client " + ClientID + " successfully inflicted mob " + monAttacked.getName() + " with "
+						+ (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints())));
+				os.writeUTF("ACK DMG " +MonsterID+" "+monAttacked.getHealthPoints()+" "+character.getHealthPoints()+" \n");
+			}
+
+			// 50-50 randomize returned damage
+
+		} catch (NullPointerException nfe) {
+			Server.log("Could not retreive monster!");
+			os.writeUTF("NACK DMG " + MonsterID + " \n");
+		}
 	}
 
 	/**
