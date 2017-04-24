@@ -90,23 +90,27 @@ public class Monster {
 	 * @return true if succeeded, false otherwise (monster already dead).
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
-		Integer damageToDeal = damage-(int)Math.floor(resist*0.1);
+		Integer damageToDeal = damage - (int) Math.floor(resist * 0.1);
+		if (damageToDeal < 0) 
+			damageToDeal=0;
 		
-		if (!isAlive() || nickname.length()==0 || damage<0){ //In case mob is already alive
-			Server.log(nickname+" failed to attack mob "+getName()+" (Alive: "+isAlive()+" ToDeal: "+damageToDeal+" damage: "+damage+" resist: "+resist);
+		if (!isAlive() || nickname.length() == 0 || damage < 0) { // In case mob
+																	// is
+																	// already
+																	// alive
+			Server.log(nickname + " failed to attack mob " + getName() + " (Alive: " + isAlive() + " ToDeal: "
+					+ damageToDeal + " damage: " + damage + " resist: " + resist);
 			return false;
 		}
 
-		
-	
 		reduceHealthPoints(reduceShieldPoints(damageToDeal));
-		
-		
-		//Update hitmap
-		if(damageReceived.containsKey(nickname)){
-			damageReceived.put(nickname, damageReceived.get(nickname)+damageToDeal);
-		} else damageReceived.put(nickname, damageToDeal);
-		
+
+		// Update hitmap
+		if (damageReceived.containsKey(nickname)) {
+			damageReceived.put(nickname, damageReceived.get(nickname) + damageToDeal);
+		} else
+			damageReceived.put(nickname, damageToDeal);
+
 		return true;
 	}
 
@@ -128,7 +132,7 @@ public class Monster {
 
 		setShieldPoints(getShieldPoints() - amountReduced);
 
-		return amount-amountReduced;
+		return amount - amountReduced;
 	}
 
 	/**
@@ -165,8 +169,10 @@ public class Monster {
 	 * @see Monster#healthPoints
 	 */
 	public boolean isAlive() {
-		// TODO
-		return true;
+		if(getHealthPoints()>0)
+			return true;
+		
+		return false;
 	}
 
 	/**
@@ -174,8 +180,10 @@ public class Monster {
 	 * @see Monster#shieldPoints
 	 */
 	public boolean isShielded() {
-		// TODO
-		return true;
+		if(getShieldPoints()>0)
+			return true;
+		
+		return false;
 	}
 
 	/**

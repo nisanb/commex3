@@ -8,6 +8,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
+import java.util.Random;
 
 import il.ac.haifa.is.datacomms.hw3.util.AttackType;
 
@@ -62,7 +63,7 @@ public final class RequestHandler implements Runnable {
 					break;
 				case "FIN":
 					handleFin();
-					break;
+					return;
 
 				default:
 					Server.log("Received unknown protocol message: " + MESSAGE);
@@ -108,7 +109,7 @@ public final class RequestHandler implements Runnable {
 				if (this.character == null || !Server.addReadyPlayer(ClientID)) {
 					// Character was not found
 					Server.log("Character " + ClientID + " wasn't found!");
-					os.writeUTF("NACK \n");
+					sendMessage(os, "NACK", "?", "?", "?", "?");
 					return;
 				}
 				if (!Server.isAllReady())
@@ -122,7 +123,8 @@ public final class RequestHandler implements Runnable {
 
 			Server.log("Sending approval: ACK RDY " + Server.getMonsters().size() + " ? "
 					+ this.character.getHealthPoints());
-			os.writeUTF("ACK RDY " + Server.getMonsters().size() + " ? " + this.character.getHealthPoints());
+			sendMessage(os, "ACK", "RDY", Server.getMonsters().size() + "", "?", this.character.getHealthPoints() + "");
+
 		} catch (NumberFormatException nfe) {
 			Server.log("Couldn't retreive client ID!");
 			closeConn();
@@ -153,19 +155,22 @@ public final class RequestHandler implements Runnable {
 	private void handleDamage(String[] req, DataOutputStream os) {
 		Integer MonsterID = 0;
 		try {
-			Integer ClientID = Integer.parseInt(req[0]), hpbefore=0;
+
+			Integer ClientID = Integer.parseInt(req[0]), hpbefore = 0;
 			MonsterID = Integer.parseInt(req[2]);
 			Monster monAttacked;
+			Integer toInflict = character.getHealthPoints();
 			AttackType attackType = AttackType.valueOf(req[3]);
 
 			Boolean attackSuccess = false;
 			synchronized (mobAttackLock) {
 				monAttacked = Server.getMonsters().get(MonsterID);
 				hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
-				if(hpbefore<=0)
+				if (hpbefore <= 0)
 					throw new NoHPException();
-				Server.log(character.getNickname() + " tries attacking " + monAttacked.getName() + " (has " + hpbefore
-						+ " hp)");
+				Server.log(character.getNickname() + "(AP: " + character.getPhysicalDamage() + " MP: "
+						+ character.getMagicalDamage() + " tries attacking " + monAttacked.getName() + " (has "
+						+ hpbefore + " hp)");
 
 				switch (attackType) {
 				case PHY:
@@ -178,19 +183,28 @@ public final class RequestHandler implements Runnable {
 				}
 
 			}
+			// 50-50 randomize returned damage
+			Random r = new Random();
+
+			if (r.nextBoolean()) {
+				character.setHealthPoints(character.getHealthPoints() - monAttacked.getDamage());
+				Server.log("Mob " + monAttacked.getName() + " inflicted " + monAttacked.getDamage() + " damage to "
+						+ character.getNickname());
+			}
 
 			if (!attackSuccess) {
 				Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
-				os.writeUTF("NACK DMG " + monAttacked.getName() + " \n");
+				sendMessage(os, "NACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
+						character.getHealthPoints() + "");
+
 			} else {
 				Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName() + " with "
 						+ (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints())) + " (Remaining: "
 						+ (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()) + " HP left");
-				os.writeUTF("ACK DMG " + MonsterID + " " + monAttacked.getHealthPoints() + " "
-						+ character.getHealthPoints() + " \n");
-			}
+				sendMessage(os, "ACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
+						character.getHealthPoints() + "");
 
-			// 50-50 randomize returned damage
+			}
 
 		} catch (NullPointerException nfe) {
 			Server.log("Could not retreive monster!");
@@ -200,21 +214,16 @@ public final class RequestHandler implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} catch (IOException ioe) {
-			Server.log("I/O Exception for Client: " + req[0]);
-			try {
-				os.writeUTF("NACK DMG " + MonsterID + " \n");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} catch(NoHPException e){
-			Server.log("Mob "+MonsterID+" has no HP left.");
-			os.writeUTF("NACK DMG "+ MonsterID+" \n");
-		}catch (Exception e) {
+
+		} catch (NoHPException e) {
+			Server.log("Mob " + MonsterID + " has no HP left.");
+			sendMessage(os, "NACK", "DMG", MonsterID + "", "?", character.getHealthPoints() + "");
+
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
 	}
 
 	/**
@@ -234,10 +243,26 @@ public final class RequestHandler implements Runnable {
 	 * handles FIN Requests from client.
 	 */
 	private void handleFin() {
-		// TODO
-	}
-}
+		Server.log("Receiving closing request from " + character.getNickname());
+		try {
+			closeConn();
+		} catch (Exception e) {
+			Server.log("Couldn't close request due to:");
+			e.printStackTrace();
+		}
 
-class NoHPException extends Exception{
-}
+	}
+
+	private void sendMessage(DataOutputStream os, String a, String b, String c, String d, String e) {
+		Server.log("Sending Message: " + a + " " + b + " " + c + " " + d + " " + e + " \n");
+		try {
+			os.writeUTF(a + " " + b + " " + c + " " + d + " " + e + " \n");
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+
+	}
+
+	class NoHPException extends Exception {
+	}
 }

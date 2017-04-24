@@ -55,11 +55,12 @@ public final class Server {
 		try {
 			log("Initiating socket interface..");
 			ServerSocket ss = new ServerSocket(Consts.PORT);
-			
+			List<Thread> threadList = new ArrayList<Thread>();
 			while (true) {
 				Socket newClient = ss.accept();
 				log("Accepted a new request!");
 				Thread t = new Thread(new RequestHandler(newClient));
+				threadList.add(t);
 				t.start();
 			}
 
