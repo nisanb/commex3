@@ -161,7 +161,7 @@ public class Character {
 		if (getClass() != obj.getClass())
 			return false;
 		Character other = (Character) obj;
-		if (!nickname.equals(other.nickname))
+		if (id!=(other.id))
 			return false;
 		return true;
 	}

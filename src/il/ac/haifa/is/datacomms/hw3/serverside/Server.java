@@ -132,6 +132,7 @@ public final class Server {
 	 * @return true is succeeded, false if already in queue.
 	 */
 	public static boolean addReadyPlayer(int id) {
+		log("Trying to add Player ID: "+id);
 		playersReady.add(id);
 		
 		return true;
@@ -142,7 +143,9 @@ public final class Server {
 	 * @return
 	 */
 	public static Boolean isAllReady(){
-		return playersReady.size()==characters.size();
+//		return playersReady.size()==characters.size();
+		//TODO CHANGE HERE ITS DEBUG MAN!
+		return playersReady.size()==Consts.numOfPlayers;
 	}
 	
 	/**

@@ -90,18 +90,17 @@ public class Monster {
 	 * @return true if succeeded, false otherwise (monster already dead).
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
-		if (!isAlive() || nickname.length()==0 || damage<resist) //In case mob is already alive
+		Integer damageToDeal = damage-(int)Math.floor(resist*0.1);
+		
+		if (!isAlive() || nickname.length()==0 || damage<0){ //In case mob is already alive
+			Server.log(nickname+" failed to attack mob "+getName()+" (Alive: "+isAlive()+" ToDeal: "+damageToDeal+" damage: "+damage+" resist: "+resist);
 			return false;
+		}
 
-		Integer damageToDeal = damage - resist;
+		
 	
-
-		while (damageToDeal > 0)
-			if (getShieldPoints() > 0)
-				damageToDeal -= reduceShieldPoints(damageToDeal);
-			else
-				reduceHealthPoints(damageToDeal);
-
+		reduceHealthPoints(reduceShieldPoints(damageToDeal));
+		
 		
 		//Update hitmap
 		if(damageReceived.containsKey(nickname)){
@@ -125,11 +124,11 @@ public class Monster {
 		if (getArmor() - amount > 0)
 			amountReduced = amount;
 		else
-			amountReduced = getArmor();
+			amountReduced = getShieldPoints();
 
-		setArmor(getArmor() - amountReduced);
+		setShieldPoints(getShieldPoints() - amountReduced);
 
-		return amountReduced;
+		return amount-amountReduced;
 	}
 
 	/**
@@ -192,8 +191,7 @@ public class Monster {
 	 * @see Monster#healthPoints
 	 */
 	public int getHealthPoints() {
-		// TODO
-		return 0;
+		return healthPoints;
 	}
 
 	/**
@@ -201,8 +199,7 @@ public class Monster {
 	 * @see Monster#shieldPoints
 	 */
 	public int getShieldPoints() {
-		// TODO
-		return 0;
+		return shieldPoints;
 	}
 
 	/**

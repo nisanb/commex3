@@ -21,7 +21,7 @@ public final class ClientDriver {
 		Client.log("Initiating a new client session...");
 		try {
 
-			for(int i=0; i<6; i++){
+			for(int i=0; i<Consts.numOfPlayers; i++){
 				Thread tmpThread = new Thread(new Client());
 				al.add(tmpThread);
 				tmpThread.start();

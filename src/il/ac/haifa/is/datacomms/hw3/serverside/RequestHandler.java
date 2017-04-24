@@ -44,7 +44,8 @@ public final class RequestHandler implements Runnable {
 			DataOutputStream streamOut = new DataOutputStream(this.socket.getOutputStream());
 
 			while (true) {
-				String MESSAGE = streamIn.readUTF();
+				String MESSAGE = streamIn.readUTF().replace("\n", "");
+
 				// Take care of BR
 				Server.log("Received Message: " + MESSAGE);
 				String[] tmpMessage = MESSAGE.split(" ");
@@ -97,6 +98,7 @@ public final class RequestHandler implements Runnable {
 		int ClientID = -1;
 		try {
 			ClientID = Integer.parseInt(req[0]);
+
 			Server.log("Client " + req[0] + " - received RDY Request");
 
 			// Load character
@@ -148,17 +150,23 @@ public final class RequestHandler implements Runnable {
 	 *            output stream to respond to client on.
 	 * @throws IOException
 	 */
-	private void handleDamage(String[] req, DataOutputStream os) throws IOException {
+	private void handleDamage(String[] req, DataOutputStream os) {
 		Integer MonsterID = 0;
 		try {
-			Integer ClientID = Integer.parseInt(req[0]);
+			Integer ClientID = Integer.parseInt(req[0]), hpbefore=0;
 			MonsterID = Integer.parseInt(req[2]);
+			Monster monAttacked;
 			AttackType attackType = AttackType.valueOf(req[3]);
-			Monster monAttacked = Server.getMonsters().get(MonsterID);
-			Integer hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
 
 			Boolean attackSuccess = false;
 			synchronized (mobAttackLock) {
+				monAttacked = Server.getMonsters().get(MonsterID);
+				hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
+				if(hpbefore<=0)
+					throw new NoHPException();
+				Server.log(character.getNickname() + " tries attacking " + monAttacked.getName() + " (has " + hpbefore
+						+ " hp)");
+
 				switch (attackType) {
 				case PHY:
 					attackSuccess = monAttacked.hitWithPhysicalAttack(character);
@@ -172,19 +180,40 @@ public final class RequestHandler implements Runnable {
 			}
 
 			if (!attackSuccess) {
-				Server.log("Client " + ClientID + " DMG to MOB " + MonsterID + " failed!");
+				Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
 				os.writeUTF("NACK DMG " + monAttacked.getName() + " \n");
 			} else {
-				Server.log("Client " + ClientID + " successfully inflicted mob " + monAttacked.getName() + " with "
-						+ (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints())));
-				os.writeUTF("ACK DMG " +MonsterID+" "+monAttacked.getHealthPoints()+" "+character.getHealthPoints()+" \n");
+				Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName() + " with "
+						+ (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints())) + " (Remaining: "
+						+ (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()) + " HP left");
+				os.writeUTF("ACK DMG " + MonsterID + " " + monAttacked.getHealthPoints() + " "
+						+ character.getHealthPoints() + " \n");
 			}
 
 			// 50-50 randomize returned damage
 
 		} catch (NullPointerException nfe) {
 			Server.log("Could not retreive monster!");
-			os.writeUTF("NACK DMG " + MonsterID + " \n");
+			try {
+				os.writeUTF("NACK DMG " + MonsterID + " \n");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch (IOException ioe) {
+			Server.log("I/O Exception for Client: " + req[0]);
+			try {
+				os.writeUTF("NACK DMG " + MonsterID + " \n");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} catch(NoHPException e){
+			Server.log("Mob "+MonsterID+" has no HP left.");
+			os.writeUTF("NACK DMG "+ MonsterID+" \n");
+		}catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -207,4 +236,8 @@ public final class RequestHandler implements Runnable {
 	private void handleFin() {
 		// TODO
 	}
+}
+
+class NoHPException extends Exception{
+}
 }

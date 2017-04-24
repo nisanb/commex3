@@ -60,7 +60,7 @@ public class Client implements Runnable {
 			log("Client " + id + " is able to log in (HP: " + healthPoints + "; Monsters: " + amountOfMonsters + ")");
 			Random r = new Random();
 			int currentMob = 0;
-			while (amountOfMonsters > 0 && healthPoints > 0) {
+			while (amountOfMonsters > 0 && healthPoints > 0 && currentMob<amountOfMonsters) {
 				/**
 				 * As long as there are monsters in-game
 				 */
@@ -68,7 +68,14 @@ public class Client implements Runnable {
 				AttackType attackType = AttackType.values()[r.nextInt(2)];
 				log("Cliet "+id+" is attempting to attack mob "+currentMob+" with "+attackType+" DMG");
 				os.writeUTF(id + " DMG " + currentMob + " " + attackType + " \n");
-
+				
+				String receivedMessage = is.readUTF().replace("\n","");
+				if(receivedMessage.contains("NACK")){
+					log("Client "+id+" failed to attack mob "+currentMob+".");
+					currentMob++;
+				} else{
+					log("Client "+id+" successfully attacked mob "+currentMob+".");
+				}
 				Thread.sleep(1000);
 
 			}
