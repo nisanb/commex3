@@ -27,7 +27,7 @@ public final class RequestHandler implements Runnable {
 	/** Locks **/
 	// Mob Attack Lock
 	private static Object mobAttackLock = new Object();
-
+	private static Boolean allReady = false;
 	/**
 	 * @param socket
 	 *            open socket with client.
@@ -99,7 +99,7 @@ public final class RequestHandler implements Runnable {
 		int ClientID = -1;
 		try {
 			ClientID = Integer.parseInt(req[0]);
-
+			
 			Server.log("Client " + req[0] + " - received RDY Request");
 
 			// Load character
@@ -112,10 +112,14 @@ public final class RequestHandler implements Runnable {
 					sendMessage(os, "NACK", "?", "?", "?", "?");
 					return;
 				}
-				if (!Server.isAllReady())
+				if (!Server.isAllReady()){
+					Server.log(ClientID+" is waiting for all players to start.");
+					while(!allReady)
 					rdyLock.wait();
+				}
 				else {
 					Server.log("All players are ready! Starting session..");
+					allReady=true;
 					rdyLock.notifyAll();
 				}
 
@@ -138,6 +142,7 @@ public final class RequestHandler implements Runnable {
 	}
 
 	private void closeConn() throws IOException {
+		
 		socket.close();
 	}
 
@@ -244,6 +249,7 @@ public final class RequestHandler implements Runnable {
 	 */
 	private void handleFin() {
 		Server.log("Receiving closing request from " + character.getNickname());
+		Server.removePlayer();
 		try {
 			closeConn();
 		} catch (Exception e) {

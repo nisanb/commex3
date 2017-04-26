@@ -32,6 +32,12 @@ public final class Server {
 	/** server's monsters. */
 	private static ArrayList<Monster> monsters;
 
+	/** Remove player lock **/
+	private static Object removePlayerLock = new Object();
+
+	/** Count players who are connected **/
+	private static Integer playersCount = 0;
+
 	private Server() {
 	}
 
@@ -42,13 +48,11 @@ public final class Server {
 		 * Build server
 		 */
 		log("Initiating server...");
-		log("Importing monsters from monsters.json");
-		initMonsters();
-		log("Importing characters from characters.json");
-		initCharacters();
+		initResources();
+
 		log("Initiating players queue..");
 		playersReady = new ArrayList<Integer>();
-		
+
 		/*
 		 * Initiate Socket
 		 */
@@ -56,18 +60,46 @@ public final class Server {
 			log("Initiating socket interface..");
 			ServerSocket ss = new ServerSocket(Consts.PORT);
 			List<Thread> threadList = new ArrayList<Thread>();
-			while (true) {
+			
+			do{
 				Socket newClient = ss.accept();
 				log("Accepted a new request!");
+				playersCount++;
 				Thread t = new Thread(new RequestHandler(newClient));
 				threadList.add(t);
 				t.start();
+			
 			}
+			while (playersCount>0);
 
+			log("=============================");
+			log("All players disconnected.");
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Initiate logs simultaniesly
+	 */
+	private static void initResources() {
+		log("Importing monsters from monsters.json");
+		Thread initMonstersThread = new Thread(Server::initMonsters);
+		initMonstersThread.start();
+
+		log("Importing characters from characters.json");
+		Thread initCharactersThread = new Thread(Server::initCharacters);
+		initCharactersThread.start();
+
+		try {
+			initMonstersThread.join();
+			initCharactersThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	public static void log(String string) {
@@ -133,22 +165,21 @@ public final class Server {
 	 * @return true is succeeded, false if already in queue.
 	 */
 	public static boolean addReadyPlayer(int id) {
-		log("Trying to add Player ID: "+id);
+		log("Trying to add Player ID: " + id);
 		playersReady.add(id);
-		
+
 		return true;
 	}
 
 	/**
 	 * Checks whether or not all players are connected and ready
+	 * 
 	 * @return
 	 */
-	public static Boolean isAllReady(){
-//		return playersReady.size()==characters.size();
-		//TODO CHANGE HERE ITS DEBUG MAN!
-		return playersReady.size()==Consts.numOfPlayers;
+	public static Boolean isAllReady() {
+		return playersReady.size() == playersCount;
 	}
-	
+
 	/**
 	 * @return list of monsters in play session.
 	 */
@@ -162,4 +193,11 @@ public final class Server {
 	public static List<Character> getCharacters() {
 		return Collections.unmodifiableList(characters);
 	}
+
+	public static void removePlayer() {
+		synchronized (removePlayerLock) {
+			playersCount--;
+		}
+	}
+
 }
