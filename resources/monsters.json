@@ -1,32 +1,32 @@
 [
 	{
 		"name": "Ctuhlhu",
-		"hp": 500,
-		"shield": 5,
+		"hp": 12400,
+		"shield": 1000,
 		"mr": 120,
 		"armor": 150,
 		"damage": 10
 	},
 	{
 		"name": "Vampire",
-		"hp": 5,
-		"shield": 500,
+		"hp": 1250,
+		"shield": 800,
 		"mr": 50,
 		"armor": 240,
 		"damage": 50
 	},
 	{
 		"name": "Dragon",
-		"hp": 500,
-		"shield": 5,
+		"hp": 5000,
+		"shield": 1000,
 		"mr": 350,
 		"armor": 400,
 		"damage": 25
 	},
 	{
 		"name": "RoboRebe",
-		"hp": 5,
-		"shield": 000,
+		"hp": 30000,
+		"shield": 0,
 		"mr": 114,
 		"armor": 200,
 		"damage": 15

@@ -31,6 +31,7 @@ public class Client implements Runnable {
 
 	public Client() {
 		id = nextId++;
+		
 	}
 
 	@Override
@@ -65,21 +66,20 @@ public class Client implements Runnable {
 				/**
 				 * Use bandages if player HP is below 100
 				 */
-				while(healthPoints<100)
+				while(healthPoints<100 && bandagesUsed<2)
 					if(!sendBandage(is, os))
 						break;
 				/**
 				 * As long as there are monsters in-game
 				 */
 				
-				/*
+				
 				AttackType attackType = AttackType.values()[r.nextInt(2)];
 
 				if(!sendDamage(is, os, currentMob, attackType))
 					currentMob++;
 					
-					*/
-				break;
+			
 
 			}
 
@@ -191,7 +191,7 @@ public class Client implements Runnable {
 			}
 			return false;
 		}
-		
+		bandagesUsed++;
 		log("Client "+id+" successfully used bandage (Old HP: "+healthPoints+" new HP: "+newHP);
 		healthPoints = newHP;
 		return true;

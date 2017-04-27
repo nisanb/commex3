@@ -94,7 +94,7 @@ public class Monster {
 		if (damageToDeal < 0) 
 			damageToDeal=0;
 		
-		if (!isAlive() || nickname.length() == 0 || damage < 0) { // In case mob
+		if (!isAlive() || nickname.length() == 0 || damageToDeal <= 0) { // In case mob
 																	// is
 																	// already
 																	// alive
@@ -124,15 +124,31 @@ public class Monster {
 	 *         previous shield points.
 	 */
 	private int reduceShieldPoints(int amount) {
-		Integer amountReduced = 0;
-		if (getArmor() - amount > 0)
-			amountReduced = amount;
-		else
-			amountReduced = getShieldPoints();
-
-		setShieldPoints(getShieldPoints() - amountReduced);
-
-		return amount - amountReduced;
+		Integer tmpAmountLeftToAttack = 0;
+		//Amount: 100
+		//SP: 75
+		//Need to return: 25
+		//Need new SP: 0
+		
+		//Amount: 50
+		//SP: 75
+		//Need to return: 0
+		//Need new SP: 25
+		
+		
+		
+		Integer toReturn = amount-getShieldPoints(); //-25
+		if(toReturn>0){
+			setShieldPoints(0);
+			return toReturn;
+		}
+		else{
+			setShieldPoints(getShieldPoints()-amount);
+			return 0;
+		}
+		
+		
+		
 	}
 
 	/**
