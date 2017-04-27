@@ -61,30 +61,25 @@ public class Client implements Runnable {
 			Random r = new Random();
 			int currentMob = 0;
 			while (amountOfMonsters > 0 && healthPoints > 0 && currentMob < amountOfMonsters) {
+				
+				/**
+				 * Use bandages if player HP is below 100
+				 */
+				while(healthPoints<100)
+					if(!sendBandage(is, os))
+						break;
 				/**
 				 * As long as there are monsters in-game
 				 */
-
-				AttackType attackType = AttackType.values()[r.nextInt(2)];
-				log("Cliet " + id + " is attempting to attack mob " + currentMob + " with " + attackType + " DMG");
-				sendMessage(os, id+"", "DMG", currentMob+"", attackType.toString());
 				
+				/*
+				AttackType attackType = AttackType.values()[r.nextInt(2)];
 
-				String receivedMessage = is.readUTF().replace("\n", "");
-				if (receivedMessage.contains("NACK")) {
-					log("Client " + id + " failed to attack mob " + currentMob + ".");
+				if(!sendDamage(is, os, currentMob, attackType))
 					currentMob++;
-				} else {
-					log("Client " + id + " successfully attacked mob " + currentMob + ".");
-				}
-				String[] msgArray = receivedMessage.split(" ");
-				Integer newHP = Integer.parseInt(msgArray[4]);
-
-				if (newHP != healthPoints) {
-					log("Client " + id + " was dealt with " + (healthPoints - newHP) + " damage (New HP: " + newHP);
-					healthPoints = newHP;
-				}
-				Thread.sleep(1000);
+					
+					*/
+				break;
 
 			}
 
@@ -117,8 +112,7 @@ public class Client implements Runnable {
 	private int sendReady(DataInputStream is, DataOutputStream os) throws IOException {
 		// Send RDY Request
 		log("Client " + id + " is sending RDY Request");
-		sendMessage(os, id+"", "RDY","?","?");
-		
+		sendMessage(os, id + "", "RDY", "?", "?");
 
 		String[] returned = is.readUTF().split(" ");
 		log("Client " + id + " received answer!!");
@@ -146,8 +140,31 @@ public class Client implements Runnable {
 	 */
 	private boolean sendDamage(DataInputStream is, DataOutputStream os, int monsterNum, AttackType attackType)
 			throws IOException {
+		log("Cliet " + id + " is attempting to attack mob " + monsterNum + " with " + attackType + " DMG");
+		sendMessage(os, id + "", "DMG", monsterNum + "", attackType.toString());
+
+		String receivedMessage = is.readUTF().replace("\n", "");
+		if (receivedMessage.contains("NACK")) {
+			log("Client " + id + " failed to attack mob " + monsterNum + ".");
+			return false;
+		}
+		
+		log("Client " + id + " successfully attacked mob " + monsterNum + ".");
+
+		String[] msgArray = receivedMessage.split(" ");
+		Integer newHP = Integer.parseInt(msgArray[4]);
+
+		if (newHP != healthPoints) {
+			log("Client " + id + " was dealt with " + (healthPoints - newHP) + " damage (New HP: " + newHP);
+			healthPoints = newHP;
+		}
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return true;
-		// TODO
 	}
 
 	/**
@@ -162,7 +179,21 @@ public class Client implements Runnable {
 	 * @throws IOException
 	 */
 	private boolean sendBandage(DataInputStream is, DataOutputStream os) throws IOException {
-		// TODO
+		os.writeUTF(id+" BND");
+		String[] returnedBND = is.readUTF().split(" ");
+		Integer newHP = Integer.parseInt(returnedBND[4]);
+		if(returnedBND[0].equals("NACK")){
+			if(newHP == 0){
+				log("Client "+id+" is already dead! Cannot heal self.");
+			} else {
+				log("Client "+id+" has no bandages left, therefore no heal was made.");
+				healthPoints = newHP;
+			}
+			return false;
+		}
+		
+		log("Client "+id+" successfully used bandage (Old HP: "+healthPoints+" new HP: "+newHP);
+		healthPoints = newHP;
 		return true;
 	}
 
@@ -176,8 +207,8 @@ public class Client implements Runnable {
 	 * @throws IOException
 	 */
 	private void sendFin(DataInputStream is, DataOutputStream os) throws IOException {
-		log("Client "+id+" is closing the game..");
-		sendMessage(os, id+"", "FIN", "?", "?");
+		log("Client " + id + " is closing the game..");
+		sendMessage(os, id + "", "FIN", "?", "?");
 		is.close();
 	}
 

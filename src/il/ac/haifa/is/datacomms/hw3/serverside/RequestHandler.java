@@ -233,7 +233,11 @@ public final class RequestHandler implements Runnable {
 
 	/**
 	 * handles BND Requests from client.
-	 * 
+	 * 11.3 : Bandage.
+			"4 BND" -> 
+			if alive and hasn't used all bandages: "ACK BND ? ? 131"
+			if dead: "NACK BND ? ? 0"
+			if used all bandages: "NACK BND ? ? 96"
 	 * @param req
 	 *            request message send by client.
 	 * @param os
@@ -241,7 +245,18 @@ public final class RequestHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void handleBandage(String[] req, DataOutputStream os) throws IOException {
-		// TODO
+		Integer ClientID = Integer.parseInt(req[0]);
+		Integer finalClientHP = character.getHealthPoints();
+		if(!character.useBandage()){
+			Server.log("Failed healing "+character.getNickname()+" (HP: "+character.getHealthPoints()+")");
+			sendMessage(os, "NACK", "BND", "?", "?", character.getHealthPoints()+"");
+			return;
+		}
+		Server.log("Successfully healed "+character.getNickname()+" with 25 HP (New HP: "+character.getHealthPoints()+");");
+		sendMessage(os, "ACK","BND","?","?",character.getHealthPoints()+"");
+
+		
+		
 	}
 
 	/**
@@ -250,6 +265,7 @@ public final class RequestHandler implements Runnable {
 	private void handleFin() {
 		Server.log("Receiving closing request from " + character.getNickname());
 		Server.removePlayer();
+		
 		try {
 			closeConn();
 		} catch (Exception e) {

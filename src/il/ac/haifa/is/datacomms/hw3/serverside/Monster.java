@@ -102,7 +102,7 @@ public class Monster {
 					+ damageToDeal + " damage: " + damage + " resist: " + resist);
 			return false;
 		}
-
+		
 		reduceHealthPoints(reduceShieldPoints(damageToDeal));
 
 		// Update hitmap

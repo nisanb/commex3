@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +33,10 @@ public final class Server {
 	/** server's monsters. */
 	private static ArrayList<Monster> monsters;
 
+	/** Server Socket **/
+	private static ServerSocket ss;
+	/** Close server command **/
+	private static Boolean closeServer = false;
 	/** Remove player lock **/
 	private static Object removePlayerLock = new Object();
 
@@ -41,7 +46,7 @@ public final class Server {
 	private Server() {
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args){
 		// TODO
 
 		/*
@@ -58,11 +63,13 @@ public final class Server {
 		 */
 		try {
 			log("Initiating socket interface..");
-			ServerSocket ss = new ServerSocket(Consts.PORT);
+			ss = new ServerSocket(Consts.PORT);
 			List<Thread> threadList = new ArrayList<Thread>();
 			
 			do{
 				Socket newClient = ss.accept();
+				if(closeServer)
+					break;
 				log("Accepted a new request!");
 				playersCount++;
 				Thread t = new Thread(new RequestHandler(newClient));
@@ -78,6 +85,15 @@ public final class Server {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch(Exception e){
+			if(e instanceof SocketException){
+				log("All clients has disconnected. Closing Server...");
+			}
+		}
+		
+		log("Printing Attack Logs:");
+		for(Monster m : monsters){
+			m.printDamageDealers();
 		}
 	}
 
@@ -197,6 +213,16 @@ public final class Server {
 	public static void removePlayer() {
 		synchronized (removePlayerLock) {
 			playersCount--;
+		}
+		if(playersCount==0){
+			try {
+				//Dummy connect to the server to jump a loop and gracefully close connection
+				closeServer=true;
+				new Socket("127.0.0.1",Consts.PORT);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 

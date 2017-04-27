@@ -49,7 +49,12 @@ public class Character {
 	 * @return true if successful, false otherwise (no bandages left, character already dead).
 	 */
 	public boolean useBandage() {
-		// TODO
+		if(this.bandagesLeft<0 || this.getHealthPoints()==0)
+			return false;
+		
+		this.setHealthPoints(getHealthPoints()+25);
+		this.bandagesLeft--;
+		
 		return true;
 	}
 	
