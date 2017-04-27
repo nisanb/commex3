@@ -1,0 +1,50 @@
+[
+	{
+		"id": 0,
+		"nickname": "Slayer420BlazeIt",
+		"level": 18,
+		"hp": 300,
+		"physicalDamage": 74,
+	 	"magicalDamage": 12
+	},
+	{
+		"id": 1,
+		"nickname": "Awesome-O",
+		"level": 21,
+		"hp": 400,
+		"physicalDamage": 84,
+		"magicalDamage": 17 
+	},
+	{
+		"id": 2,
+		"nickname": "Lancelot",
+		"level": 48,
+		"hp": 800,
+		"physicalDamage": 149,
+		"magicalDamage": 55	
+	},
+	{
+		"id": 3,
+		"nickname": "StrongBlackIndependantWoman",
+		"level": 101,
+		"hp": 1000,
+		"physicalDamage": 320,
+		"magicalDamage": 123
+	},
+	{
+		"id": 4,
+		"nickname": "SocketsAreFun",
+		"level": 51,
+		"hp": 800,
+		"physicalDamage": 42,
+		"magicalDamage": 172
+	},
+	{
+		"id": 5,
+		"nickname": "pornhub.com",
+		"level": 60,
+		"hp": 800,
+		"physicalDamage": 7,
+		"magicalDamage": 243
+	}
+]
