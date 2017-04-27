@@ -28,6 +28,7 @@ public final class RequestHandler implements Runnable {
 	// Mob Attack Lock
 	private static Object mobAttackLock = new Object();
 	private static Boolean allReady = false;
+
 	/**
 	 * @param socket
 	 *            open socket with client.
@@ -99,7 +100,7 @@ public final class RequestHandler implements Runnable {
 		int ClientID = -1;
 		try {
 			ClientID = Integer.parseInt(req[0]);
-			
+
 			Server.log("Client " + req[0] + " - received RDY Request");
 
 			// Load character
@@ -112,14 +113,13 @@ public final class RequestHandler implements Runnable {
 					sendMessage(os, "NACK", "?", "?", "?", "?");
 					return;
 				}
-				if (!Server.isAllReady()){
-					Server.log(ClientID+" is waiting for all players to start.");
-					while(!allReady)
-					rdyLock.wait();
-				}
-				else {
+				if (!Server.isAllReady()) {
+					Server.log(ClientID + " is waiting for all players to start.");
+					while (!allReady)
+						rdyLock.wait();
+				} else {
 					Server.log("All players are ready! Starting session..");
-					allReady=true;
+					allReady = true;
 					rdyLock.notifyAll();
 				}
 
@@ -142,7 +142,7 @@ public final class RequestHandler implements Runnable {
 	}
 
 	private void closeConn() throws IOException {
-		
+
 		socket.close();
 	}
 
@@ -191,24 +191,31 @@ public final class RequestHandler implements Runnable {
 			// 50-50 randomize returned damage
 			Random r = new Random();
 
-			if (r.nextBoolean()) {
-				character.setHealthPoints(character.getHealthPoints() - monAttacked.getDamage());
-				Server.log("Mob " + monAttacked.getName() + " inflicted " + monAttacked.getDamage() + " damage to "
-						+ character.getNickname());
-			}
+			if (r.nextBoolean())
+				if (character.wound(monAttacked.getDamage())) {
+					Server.log("Mob " + monAttacked.getName() + " inflicted " + monAttacked.getDamage() + " damage to "
+							+ character.getNickname());
+					Server.log("Character " + character.getNickname() + " is DEAD!");
+				} else
+					Server.log("Character " + character.getNickname() + " has " + character.getHealthPoints()
+							+ " HP Left.");
 
-			if (!attackSuccess) {
-				Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
-				sendMessage(os, "NACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
-						character.getHealthPoints() + "");
+			synchronized (mobAttackLock) {
 
-			} else {
-				Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName() + " with "
-						+ (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints())) + " (Remaining: "
-						+ (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()) + " HP left");
-				sendMessage(os, "ACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
-						character.getHealthPoints() + "");
+				if (!attackSuccess) {
+					Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
+					sendMessage(os, "NACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
+							character.getHealthPoints() + "");
 
+				} else {
+					Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName()
+							+ " with " + (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()))
+							+ " (Remaining: " + (monAttacked.getHealthPoints())
+							+ " HP left and "+ monAttacked.getShieldPoints()+" SP Left)");
+					sendMessage(os, "ACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
+							character.getHealthPoints() + "");
+
+				}
 			}
 
 		} catch (NullPointerException nfe) {
@@ -232,12 +239,10 @@ public final class RequestHandler implements Runnable {
 	}
 
 	/**
-	 * handles BND Requests from client.
-	 * 11.3 : Bandage.
-			"4 BND" -> 
-			if alive and hasn't used all bandages: "ACK BND ? ? 131"
-			if dead: "NACK BND ? ? 0"
-			if used all bandages: "NACK BND ? ? 96"
+	 * handles BND Requests from client. 11.3 : Bandage. "4 BND" -> if alive and
+	 * hasn't used all bandages: "ACK BND ? ? 131" if dead: "NACK BND ? ? 0" if
+	 * used all bandages: "NACK BND ? ? 96"
+	 * 
 	 * @param req
 	 *            request message send by client.
 	 * @param os
@@ -247,16 +252,17 @@ public final class RequestHandler implements Runnable {
 	private void handleBandage(String[] req, DataOutputStream os) throws IOException {
 		Integer ClientID = Integer.parseInt(req[0]);
 		Integer finalClientHP = character.getHealthPoints();
-		if(!character.useBandage()){
-			Server.log("Failed healing "+character.getNickname()+" (HP: "+character.getHealthPoints()+")");
-			sendMessage(os, "NACK", "BND", "?", "?", character.getHealthPoints()+"");
+		Server.log("Received BND Request from " + character.getNickname() + " (Has " + character.getBandagesLeft()
+				+ " bandages)");
+		if (!character.useBandage()) {
+			Server.log("Failed healing " + character.getNickname() + " (HP: " + character.getHealthPoints() + ")");
+			sendMessage(os, "NACK", "BND", "?", "?", character.getHealthPoints() + "");
 			return;
 		}
-		Server.log("Successfully healed "+character.getNickname()+" with 25 HP (New HP: "+character.getHealthPoints()+");");
-		sendMessage(os, "ACK","BND","?","?",character.getHealthPoints()+"");
+		Server.log("Successfully healed " + character.getNickname() + " with 25 HP (New HP: "
+				+ character.getHealthPoints() + ");");
+		sendMessage(os, "ACK", "BND", "?", "?", character.getHealthPoints() + "");
 
-		
-		
 	}
 
 	/**
@@ -265,7 +271,7 @@ public final class RequestHandler implements Runnable {
 	private void handleFin() {
 		Server.log("Receiving closing request from " + character.getNickname());
 		Server.removePlayer();
-		
+
 		try {
 			closeConn();
 		} catch (Exception e) {

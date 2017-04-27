@@ -32,6 +32,7 @@ public class Character {
 	public Character(int id, String nickname) {
 		this.id = id;
 		this.nickname = nickname;
+		this.bandagesLeft = 2;
 	}
 	
 	/**
@@ -40,8 +41,12 @@ public class Character {
 	 * @return true if died, false otherwise.
 	 */
 	public boolean wound(int damage) {
-		// TODO
-		return true;
+		healthPoints-=damage;
+		if(healthPoints<=0){
+			healthPoints=0;
+			return true;
+		}
+		return false;
 	}
 	
 	/**
@@ -49,7 +54,7 @@ public class Character {
 	 * @return true if successful, false otherwise (no bandages left, character already dead).
 	 */
 	public boolean useBandage() {
-		if(this.bandagesLeft<0 || this.getHealthPoints()==0)
+		if(this.getBandagesLeft()<=0 || this.getHealthPoints()==0)
 			return false;
 		
 		this.setHealthPoints(getHealthPoints()+25);
@@ -143,6 +148,9 @@ public class Character {
 		return this;
 	}
 
+	public Integer getBandagesLeft(){
+		return this.bandagesLeft;
+	}
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
