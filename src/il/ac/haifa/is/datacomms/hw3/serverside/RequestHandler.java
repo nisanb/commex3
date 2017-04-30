@@ -1,16 +1,14 @@
 package il.ac.haifa.is.datacomms.hw3.serverside;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.Socket;
+import java.time.LocalTime;
 import java.util.Random;
 
 import il.ac.haifa.is.datacomms.hw3.util.AttackType;
+import il.ac.haifa.is.datacomms.hw3.util.Log;
 
 /**
  * class for handling client requests.
@@ -24,9 +22,7 @@ public final class RequestHandler implements Runnable {
 	/** character associated with the connection. */
 	private Character character;
 
-	/** Locks **/
-	// Mob Attack Lock
-	private static Object mobAttackLock = new Object();
+	/** All Ready Checkpoint **/
 	private static Boolean allReady = false;
 
 	/**
@@ -158,79 +154,44 @@ public final class RequestHandler implements Runnable {
 	 * @throws IOException
 	 */
 	private void handleDamage(String[] req, DataOutputStream os) {
-		Integer MonsterID = 0;
-		try {
 
-			Integer ClientID = Integer.parseInt(req[0]), hpbefore = 0;
-			MonsterID = Integer.parseInt(req[2]);
-			Monster monAttacked;
-			Integer toInflict = character.getHealthPoints();
-			AttackType attackType = AttackType.valueOf(req[3]);
+		AttackType atkType = AttackType.valueOf(req[3]);
+		Monster monAttacked = Server.getMonsters().get(Integer.parseInt(req[2]));
+		Boolean attackSuccess = false;
 
-			Boolean attackSuccess = false;
-
-			monAttacked = Server.getMonsters().get(MonsterID);
-			hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
-			if (hpbefore <= 0)
-				throw new NoHPException();
-			Server.log(character.getNickname() + "(AP: " + character.getPhysicalDamage() + " MP: "
-					+ character.getMagicalDamage() + " tries attacking " + monAttacked.getName() + " (has " + hpbefore
-					+ " hp)");
-
-			switch (attackType) {
-			case PHY:
-				attackSuccess = monAttacked.hitWithPhysicalAttack(character);
-				break;
-			case MAG:
-				attackSuccess = monAttacked.hitWithMagicAttack(character);
-				break;
-			}
-
-			// 50-50 randomize returned damage
-			Random attackDice = new Random();
-
-			if (attackDice.nextBoolean())
-				if (character.wound(monAttacked.getDamage())) {
-					Server.log("Mob " + monAttacked.getName() + " inflicted " + monAttacked.getDamage() + " damage to "
-							+ character.getNickname());
-					Server.log("Character " + character.getNickname() + " is DEAD!");
-				} else
-					Server.log("Character " + character.getNickname() + " has " + character.getHealthPoints()
-							+ " HP Left.");
-
-				if (!attackSuccess) {
-					Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
-					sendMessage(os, "NACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
-							character.getHealthPoints() + "");
-
-				} else {
-					Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName()
-							+ " with " + (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()))
-							+ " (Remaining: " + (monAttacked.getHealthPoints()) + " HP left and "
-							+ monAttacked.getShieldPoints() + " SP Left)");
-					sendMessage(os, "ACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
-							character.getHealthPoints() + "");
-
-				}
-			
-
-		} catch (NullPointerException nfe) {
-			Server.log("Could not retreive monster!");
-			try {
-				os.writeUTF("NACK DMG " + MonsterID + " \n");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		} catch (NoHPException e) {
-			Server.log("Mob " + MonsterID + " has no HP left.");
-			sendMessage(os, "NACK", "DMG", MonsterID + "", "?", character.getHealthPoints() + "");
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		/**
+		 * Check if monster and character are alive
+		 */
+		if (!monAttacked.isAlive() || !character.isAlive()) {
+			sendMessage(os, "NACK", "DMG", req[2], "", "");
+			return;
 		}
+
+		switch (atkType) {
+		case MAG:
+			attackSuccess = monAttacked.hitWithMagicAttack(character);
+			break;
+		case PHY:
+			attackSuccess = monAttacked.hitWithPhysicalAttack(character);
+			break;
+		}
+
+		if(!attackSuccess){
+			sendMessage(os, "NACK", "DMG", req[2], "", "");
+			return;
+		}
+		
+		int hpBefore = character.getHealthPoints();
+		/**
+		 * Return Attack to character
+		 */
+		if (new Random().nextBoolean())
+			character.wound(monAttacked.getDamage());
+		Log.addTeamLog(character.getNickname(), new Object[]{LocalTime.now(), monAttacked.getName(),
+				req[3] + ": " + (req[3].equals("PHY") ? character.getPhysicalDamage() : character.getMagicalDamage()),
+				hpBefore, character.getHealthPoints()});
+		sendMessage(os, "ACK", "DMG", req[2], monAttacked.getHealthPoints() + "", character.getHealthPoints() + "");
+
 
 	}
 

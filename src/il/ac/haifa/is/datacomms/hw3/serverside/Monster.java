@@ -1,6 +1,9 @@
 package il.ac.haifa.is.datacomms.hw3.serverside;
 
+import java.time.LocalTime;
 import java.util.HashMap;
+
+import il.ac.haifa.is.datacomms.hw3.util.Log;
 
 /**
  * class representation of a monster in FoA.
@@ -91,12 +94,13 @@ public class Monster {
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
 		Integer damageToDeal = damage - (int) Math.floor(resist * 0.1);
+
 		if (damageToDeal < 0)
 			damageToDeal = 0;
 
-		if (!isAlive() || nickname.length() == 0 || damageToDeal <= 0) { // In
-																			// case
-																			// mob
+		if (!isAlive() || nickname.length() == 0) { // In
+													// case
+													// mob
 			// is
 			// already
 			// alive
@@ -105,8 +109,23 @@ public class Monster {
 			return false;
 		}
 
-		reduceHealthPoints(reduceShieldPoints(damageToDeal));
+		int spBefore = getShieldPoints();
+		int hpBefore = getHealthPoints();
 
+		/**
+		 * Used isShielded method
+		 */
+
+		if (isShielded())
+			damageToDeal = reduceShieldPoints(damageToDeal);
+
+		reduceHealthPoints(damageToDeal);
+
+		// Old usage
+		// reduceHealthPoints(reduceShieldPoints(damageToDeal));
+
+		Log.addMonsterLog(name,
+				new Object[] { LocalTime.now(), nickname, damage, damageToDeal, getShieldPoints(), getHealthPoints() });
 		// Update hitmap
 		if (damageReceived.containsKey(nickname)) {
 			damageReceived.put(nickname, damageReceived.get(nickname) + damageToDeal);

@@ -144,7 +144,7 @@ public class Client implements Runnable {
 	 */
 	private boolean sendDamage(DataInputStream is, DataOutputStream os, int monsterNum, AttackType attackType)
 			throws IOException {
-		log("Cliet " + id + " is attempting to attack mob " + monsterNum + " with " + attackType + " DMG");
+		log("Client " + id + " is attempting to attack mob " + monsterNum + " with " + attackType + " DMG");
 		sendMessage(os, id + "", "DMG", monsterNum + "", attackType.toString());
 
 		String receivedMessage = is.readUTF().replace("\n", "");
@@ -163,7 +163,7 @@ public class Client implements Runnable {
 			healthPoints = newHP;
 		}
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(1);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

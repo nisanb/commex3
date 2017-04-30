@@ -18,6 +18,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import il.ac.haifa.is.datacomms.hw3.util.Consts;
+import il.ac.haifa.is.datacomms.hw3.util.Log;
 
 /**
  * class representation of Server.
@@ -64,7 +65,7 @@ public final class Server {
 		try {
 			log("Initiating socket interface..");
 			ss = new ServerSocket(Consts.PORT);
-			List<Thread> threadList = new ArrayList<Thread>();
+
 			
 			do{
 				Socket newClient = ss.accept();
@@ -72,9 +73,8 @@ public final class Server {
 					break;
 				log("Accepted a new request!");
 				playersCount++;
-				Thread t = new Thread(new RequestHandler(newClient));
-				threadList.add(t);
-				t.start();
+				new Thread(new RequestHandler(newClient)).start();
+			
 			
 			}
 			while (playersCount>0);
@@ -95,6 +95,7 @@ public final class Server {
 		for(Monster m : monsters){
 			m.printDamageDealers();
 		}
+		Log.printAll();
 	}
 
 	/**
