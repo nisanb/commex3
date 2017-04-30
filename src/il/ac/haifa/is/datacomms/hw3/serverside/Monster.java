@@ -13,14 +13,14 @@ public class Monster {
 	 * monster's health points. if at 0, monster is dead. can only be reduced if
 	 * shield points are at 0.
 	 */
-	private int healthPoints;
-
+	private volatile int healthPoints;
+	private static Object healthLock = new Object();
 	/**
 	 * monster's shield points. if at 0, monster's health points can be reduced.
 	 * else (above 0), only shield points can be reduced.
 	 */
-	private int shieldPoints;
-
+	private volatile int shieldPoints;
+	private static Object shieldLock = new Object();
 	/**
 	 * monster's magic attacks resistance. lowers damage taken from magic
 	 * attacks by floor(0.1 * magicResist).
@@ -91,18 +91,20 @@ public class Monster {
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
 		Integer damageToDeal = damage - (int) Math.floor(resist * 0.1);
-		if (damageToDeal < 0) 
-			damageToDeal=0;
-		
-		if (!isAlive() || nickname.length() == 0 || damageToDeal <= 0) { // In case mob
-																	// is
-																	// already
-																	// alive
+		if (damageToDeal < 0)
+			damageToDeal = 0;
+
+		if (!isAlive() || nickname.length() == 0 || damageToDeal <= 0) { // In
+																			// case
+																			// mob
+			// is
+			// already
+			// alive
 			Server.log(nickname + " failed to attack mob " + getName() + " (Alive: " + isAlive() + " ToDeal: "
 					+ damageToDeal + " damage: " + damage + " resist: " + resist);
 			return false;
 		}
-		
+
 		reduceHealthPoints(reduceShieldPoints(damageToDeal));
 
 		// Update hitmap
@@ -125,30 +127,19 @@ public class Monster {
 	 */
 	private int reduceShieldPoints(int amount) {
 		Integer tmpAmountLeftToAttack = 0;
-		//Amount: 100
-		//SP: 75
-		//Need to return: 25
-		//Need new SP: 0
-		
-		//Amount: 50
-		//SP: 75
-		//Need to return: 0
-		//Need new SP: 25
-		
-		
-		
-		Integer toReturn = amount-getShieldPoints(); //-25
-		if(toReturn>0){
-			setShieldPoints(0);
-			return toReturn;
+
+		Integer toReturn = amount - getShieldPoints(); // -25
+
+		synchronized (shieldLock) {
+			if (toReturn > 0) {
+				setShieldPoints(0);
+				return toReturn;
+			} else {
+				setShieldPoints(getShieldPoints() - amount);
+				return 0;
+			}
 		}
-		else{
-			setShieldPoints(getShieldPoints()-amount);
-			return 0;
-		}
-		
-		
-		
+
 	}
 
 	/**
@@ -161,10 +152,13 @@ public class Monster {
 	private void reduceHealthPoints(int amount) {
 		Integer toUpdate = 0;
 		toUpdate = getHealthPoints() - amount;
-		if (toUpdate < 0)
-			toUpdate = 0;
 
-		setHealthPoints(toUpdate);
+		synchronized (healthLock) {
+			if (toUpdate < 0)
+				toUpdate = 0;
+
+			setHealthPoints(toUpdate);
+		}
 
 	}
 
@@ -185,9 +179,9 @@ public class Monster {
 	 * @see Monster#healthPoints
 	 */
 	public boolean isAlive() {
-		if(getHealthPoints()>0)
+		if (getHealthPoints() > 0)
 			return true;
-		
+
 		return false;
 	}
 
@@ -196,9 +190,9 @@ public class Monster {
 	 * @see Monster#shieldPoints
 	 */
 	public boolean isShielded() {
-		if(getShieldPoints()>0)
+		if (getShieldPoints() > 0)
 			return true;
-		
+
 		return false;
 	}
 
@@ -215,7 +209,10 @@ public class Monster {
 	 * @see Monster#healthPoints
 	 */
 	public int getHealthPoints() {
-		return healthPoints;
+		synchronized (healthLock) {
+			return healthPoints;
+		}
+
 	}
 
 	/**
@@ -223,7 +220,9 @@ public class Monster {
 	 * @see Monster#shieldPoints
 	 */
 	public int getShieldPoints() {
-		return shieldPoints;
+		synchronized (shieldLock) {
+			return shieldPoints;
+		}
 	}
 
 	/**
@@ -266,7 +265,9 @@ public class Monster {
 	 * @return reference to this instance.
 	 */
 	public Monster setHealthPoints(int healthPoints) {
-		this.healthPoints = healthPoints;
+		synchronized (healthLock) {
+			this.healthPoints = healthPoints;
+		}
 		return this;
 	}
 
@@ -276,7 +277,9 @@ public class Monster {
 	 * @return reference to this instance.
 	 */
 	public Monster setShieldPoints(int shieldPoints) {
-		this.shieldPoints = shieldPoints;
+		synchronized (healthLock) {
+			this.shieldPoints = shieldPoints;
+		}
 		return this;
 	}
 

@@ -168,30 +168,28 @@ public final class RequestHandler implements Runnable {
 			AttackType attackType = AttackType.valueOf(req[3]);
 
 			Boolean attackSuccess = false;
-			synchronized (mobAttackLock) {
-				monAttacked = Server.getMonsters().get(MonsterID);
-				hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
-				if (hpbefore <= 0)
-					throw new NoHPException();
-				Server.log(character.getNickname() + "(AP: " + character.getPhysicalDamage() + " MP: "
-						+ character.getMagicalDamage() + " tries attacking " + monAttacked.getName() + " (has "
-						+ hpbefore + " hp)");
 
-				switch (attackType) {
-				case PHY:
-					attackSuccess = monAttacked.hitWithPhysicalAttack(character);
-					break;
-				case MAG:
-					attackSuccess = monAttacked.hitWithMagicAttack(character);
-					break;
+			monAttacked = Server.getMonsters().get(MonsterID);
+			hpbefore = monAttacked.getHealthPoints() + monAttacked.getShieldPoints();
+			if (hpbefore <= 0)
+				throw new NoHPException();
+			Server.log(character.getNickname() + "(AP: " + character.getPhysicalDamage() + " MP: "
+					+ character.getMagicalDamage() + " tries attacking " + monAttacked.getName() + " (has " + hpbefore
+					+ " hp)");
 
-				}
-
+			switch (attackType) {
+			case PHY:
+				attackSuccess = monAttacked.hitWithPhysicalAttack(character);
+				break;
+			case MAG:
+				attackSuccess = monAttacked.hitWithMagicAttack(character);
+				break;
 			}
-			// 50-50 randomize returned damage
-			Random r = new Random();
 
-			if (r.nextBoolean())
+			// 50-50 randomize returned damage
+			Random attackDice = new Random();
+
+			if (attackDice.nextBoolean())
 				if (character.wound(monAttacked.getDamage())) {
 					Server.log("Mob " + monAttacked.getName() + " inflicted " + monAttacked.getDamage() + " damage to "
 							+ character.getNickname());
@@ -199,8 +197,6 @@ public final class RequestHandler implements Runnable {
 				} else
 					Server.log("Character " + character.getNickname() + " has " + character.getHealthPoints()
 							+ " HP Left.");
-
-			synchronized (mobAttackLock) {
 
 				if (!attackSuccess) {
 					Server.log(character.getNickname() + " failed to attack mob " + monAttacked.getName());
@@ -210,13 +206,13 @@ public final class RequestHandler implements Runnable {
 				} else {
 					Server.log(character.getNickname() + " successfully inflicted mob " + monAttacked.getName()
 							+ " with " + (hpbefore - (monAttacked.getHealthPoints() + monAttacked.getShieldPoints()))
-							+ " (Remaining: " + (monAttacked.getHealthPoints())
-							+ " HP left and "+ monAttacked.getShieldPoints()+" SP Left)");
+							+ " (Remaining: " + (monAttacked.getHealthPoints()) + " HP left and "
+							+ monAttacked.getShieldPoints() + " SP Left)");
 					sendMessage(os, "ACK", "DMG", MonsterID + "", monAttacked.getHealthPoints() + "",
 							character.getHealthPoints() + "");
 
 				}
-			}
+			
 
 		} catch (NullPointerException nfe) {
 			Server.log("Could not retreive monster!");

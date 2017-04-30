@@ -16,7 +16,7 @@ public final class ClientDriver {
 	}
 
 	public static void main(String[] args) {
-		// TODO
+
 		List<Thread> al = new ArrayList<Thread>();
 		Client.log("Initiating a new client session...");
 		try {
@@ -26,9 +26,7 @@ public final class ClientDriver {
 				al.add(tmpThread);
 				tmpThread.start();
 			}
-//			for(Thread th : al){
-//				th.join();
-//			}
+
 						
 			
 		} catch (Exception e) {
