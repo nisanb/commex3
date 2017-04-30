@@ -61,6 +61,10 @@ public class Client implements Runnable {
 			log("Client " + id + " is able to log in (HP: " + healthPoints + "; Monsters: " + amountOfMonsters + ")");
 			Random r = new Random();
 			int currentMob = 0;
+			
+			/**
+			 * As long as there are monsters in-game & Character isn't dead
+			 */
 			while (amountOfMonsters > 0 && healthPoints > 0 && currentMob < amountOfMonsters) {
 				
 				/**
@@ -69,20 +73,20 @@ public class Client implements Runnable {
 				while(healthPoints<100 && bandagesUsed<2)
 					if(!sendBandage(is, os))
 						break;
-				/**
-				 * As long as there are monsters in-game
+				
+				
+				/*
+				 * Choose an attack type
 				 */
-				
-				
 				AttackType attackType = AttackType.values()[r.nextInt(2)];
 
+				//Repeat sending an attack to a monster unless it is already dead
 				if(!sendDamage(is, os, currentMob, attackType))
 					currentMob++;
 					
-			
 
 			}
-
+			
 			sendFin(is, os);
 			os.close();
 
@@ -159,7 +163,7 @@ public class Client implements Runnable {
 			healthPoints = newHP;
 		}
 		try {
-			Thread.sleep(1);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
