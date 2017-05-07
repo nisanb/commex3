@@ -70,9 +70,6 @@ public class Client implements Runnable {
 				/**
 				 * Use bandages if player HP is below 100
 				 */
-				while(healthPoints<100 && bandagesUsed<2)
-					if(!sendBandage(is, os))
-						break;
 				
 				
 				/*
@@ -83,7 +80,12 @@ public class Client implements Runnable {
 				//Repeat sending an attack to a monster unless it is already dead
 				if(!sendDamage(is, os, currentMob, attackType))
 					currentMob++;
-					
+				
+				
+				while(healthPoints<100 && bandagesUsed<2)
+					if(!sendBandage(is, os))
+						break;
+				
 
 			}
 			
