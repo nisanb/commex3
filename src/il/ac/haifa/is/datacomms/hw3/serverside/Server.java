@@ -18,7 +18,6 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import il.ac.haifa.is.datacomms.hw3.util.Consts;
-import il.ac.haifa.is.datacomms.hw3.util.Log;
 
 /**
  * class representation of Server.
@@ -95,7 +94,6 @@ public final class Server {
 		for(Monster m : monsters){
 			m.printDamageDealers();
 		}
-		Log.printAll();
 	}
 
 	/**

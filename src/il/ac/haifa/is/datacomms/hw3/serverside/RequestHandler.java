@@ -4,11 +4,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.time.LocalTime;
 import java.util.Random;
-
 import il.ac.haifa.is.datacomms.hw3.util.AttackType;
-import il.ac.haifa.is.datacomms.hw3.util.Log;
 
 /**
  * class for handling client requests.
@@ -187,9 +184,7 @@ public final class RequestHandler implements Runnable {
 		 */
 		if (new Random().nextBoolean())
 			character.wound(monAttacked.getDamage());
-		Log.addTeamLog(character.getNickname(), new Object[]{LocalTime.now(), monAttacked.getName(),
-				req[3] + ": " + (req[3].equals("PHY") ? character.getPhysicalDamage() : character.getMagicalDamage()),
-				hpBefore, character.getHealthPoints()});
+
 		sendMessage(os, "ACK", "DMG", req[2], monAttacked.getHealthPoints() + "", character.getHealthPoints() + "");
 
 

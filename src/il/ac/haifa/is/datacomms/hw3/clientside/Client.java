@@ -82,9 +82,10 @@ public class Client implements Runnable {
 					currentMob++;
 				
 				
-				while(healthPoints<100 && bandagesUsed<2)
+				if(healthPoints<100 && bandagesUsed<2)
 					if(!sendBandage(is, os))
-						break;
+						log("Client "+id+" failed to use bandage.");
+					else log("Client "+id+" successfully used a bandage.");
 				
 
 			}

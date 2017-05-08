@@ -1,9 +1,9 @@
 package il.ac.haifa.is.datacomms.hw3.serverside;
 
-import java.time.LocalTime;
+
 import java.util.HashMap;
 
-import il.ac.haifa.is.datacomms.hw3.util.Log;
+
 
 /**
  * class representation of a monster in FoA.
@@ -124,8 +124,7 @@ public class Monster {
 		// Old usage
 		// reduceHealthPoints(reduceShieldPoints(damageToDeal));
 
-		Log.addMonsterLog(name,
-				new Object[] { LocalTime.now(), nickname, damage, damageToDeal, getShieldPoints(), getHealthPoints() });
+
 		// Update hitmap
 		if (damageReceived.containsKey(nickname)) {
 			damageReceived.put(nickname, damageReceived.get(nickname) + damageToDeal);
