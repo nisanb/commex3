@@ -51,7 +51,7 @@ public class Client implements Runnable {
 			 * Client will now load the game
 			 */
 			log("Client " + id + " is loading...");
-			Thread.sleep(3000);
+			Thread.sleep(Consts.loadingDelay);
 			log("Client " + id + " is ready!");
 
 			/**
@@ -166,7 +166,7 @@ public class Client implements Runnable {
 			healthPoints = newHP;
 		}
 		try {
-			Thread.sleep(1000);
+			Thread.sleep(Consts.attackDelay);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

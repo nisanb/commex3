@@ -80,7 +80,8 @@ public final class Server {
 
 			log("=============================");
 			log("All players disconnected.");
-			
+			log("Closing server listening connection..");
+			ss.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
