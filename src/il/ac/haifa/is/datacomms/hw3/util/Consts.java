@@ -6,4 +6,5 @@ public final class Consts {
 	public static final int numOfPlayers = 6;
 	public static final int attackDelay = 1000;
 	public static final int loadingDelay = 3000;
+	public static final int lowestHPToBandage = 100;
 }

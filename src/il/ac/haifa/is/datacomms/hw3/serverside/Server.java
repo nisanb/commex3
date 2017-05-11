@@ -41,7 +41,7 @@ public final class Server {
 	private static Object removePlayerLock = new Object();
 
 	/** Count players who are connected **/
-	private static Integer playersCount = 0;
+	private static volatile Integer playersCount = 0;
 
 	private Server() {
 	}
