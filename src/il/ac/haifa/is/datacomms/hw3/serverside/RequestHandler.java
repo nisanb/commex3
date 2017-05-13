@@ -174,6 +174,7 @@ public final class RequestHandler implements Runnable {
 		}
 
 		if(!attackSuccess){
+			Server.log(character.getNickname()+" failed attacking mob "+monAttacked.getName());
 			sendMessage(os, "NACK", "DMG", req[2], "", "");
 			return;
 		}

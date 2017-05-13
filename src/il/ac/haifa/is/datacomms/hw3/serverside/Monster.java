@@ -1,9 +1,6 @@
 package il.ac.haifa.is.datacomms.hw3.serverside;
 
-
 import java.util.HashMap;
-
-
 
 /**
  * class representation of a monster in FoA.
@@ -57,8 +54,12 @@ public class Monster {
 	 * @return true if succeeded, false otherwise.
 	 */
 	public boolean hitWithPhysicalAttack(Character damageDealer) {
-		if (damageDealer == null || !damageDealer.isAlive())
+		Server.log(damageDealer.getNickname() + " is attempting to hit " + getName() + " with PHY Damage.");
+		if (damageDealer == null || !damageDealer.isAlive()) {
+			Server.log(damageDealer.getNickname() + " failed attacking mob " + getName() + " (character is dead).");
 			return false;
+
+		}
 		return handleAttack(damageDealer.getNickname(), damageDealer.getPhysicalDamage(), armor);
 	}
 
@@ -73,8 +74,11 @@ public class Monster {
 	 *         monster is dead).
 	 */
 	public boolean hitWithMagicAttack(Character damageDealer) {
-		if (damageDealer == null || !damageDealer.isAlive())
+		Server.log(damageDealer.getNickname() + " is attempting to hit " + getName() + " with MAG Damage.");
+		if (damageDealer == null || !damageDealer.isAlive()) {
+			Server.log(damageDealer.getNickname() + " failed attacking mob " + getName() + " (character is dead).");
 			return false;
+		}
 		return handleAttack(damageDealer.getNickname(), damageDealer.getMagicalDamage(), magicResist);
 	}
 
@@ -94,9 +98,10 @@ public class Monster {
 	 */
 	private boolean handleAttack(String nickname, int damage, int resist) {
 		Integer damageToDeal = damage - (int) Math.floor(resist * 0.1);
-
-		if (damageToDeal < 0)
+		Server.log(nickname + " is attacking mob " + this.name + " with " + damageToDeal + " damage.");
+		if (damageToDeal < 0) {
 			damageToDeal = 0;
+		}
 
 		if (!isAlive() || nickname.length() == 0) { // In
 													// case
@@ -123,7 +128,6 @@ public class Monster {
 
 		// Old usage
 		// reduceHealthPoints(reduceShieldPoints(damageToDeal));
-
 
 		// Update hitmap
 		if (damageReceived.containsKey(nickname)) {

@@ -4,143 +4,161 @@ package il.ac.haifa.is.datacomms.hw3.serverside;
  * class representation of a human controlled character.
  */
 public class Character {
-	/**character's id.*/
+	/** character's id. */
 	private final int id;
-	
-	/**character's nickname.*/
+
+	/** character's nickname. */
 	private final String nickname;
-	
-	/**character's level.*/
+
+	/** character's level. */
 	private short level;
-	
-	/**character's health points.*/
+
+	/** character's health points. */
 	private int healthPoints;
-	
-	/**character's physical damage.*/
+
+	/** character's physical damage. */
 	private int physicalDamage;
-	
-	/**character's magical damage.*/
+
+	/** character's magical damage. */
 	private int magicalDamage;
-	
-	/**bandages left for healing.*/
+
+	/** bandages left for healing. */
 	private int bandagesLeft;
-	
+
 	/**
-	 * @param id character's id.
-	 * @param nickname character's nickname.
+	 * @param id
+	 *            character's id.
+	 * @param nickname
+	 *            character's nickname.
 	 */
 	public Character(int id, String nickname) {
 		this.id = id;
 		this.nickname = nickname;
 		this.bandagesLeft = 2;
 	}
-	
+
 	/**
 	 * inflicts damage to character.
-	 * @param damage damage taken.
+	 * 
+	 * @param damage
+	 *            damage taken.
 	 * @return true if died, false otherwise.
 	 */
 	public boolean wound(int damage) {
-		healthPoints-=damage;
-		if(healthPoints<=0){
-			healthPoints=0;
+		Server.log(getNickname() + " is inflicted with " + damage + " damage (Old HP: " + healthPoints + " new HP: "
+				+ (healthPoints - damage) + ")");
+
+		healthPoints -= damage;
+		if (healthPoints <= 0) {
+			Server.log(getNickname() + " died!");
+			healthPoints = 0;
 			return true;
 		}
 		return false;
 	}
-	
+
 	/**
 	 * heal character by use of a bandage.
-	 * @return true if successful, false otherwise (no bandages left, character already dead).
+	 * 
+	 * @return true if successful, false otherwise (no bandages left, character
+	 *         already dead).
 	 */
 	public boolean useBandage() {
-		if(this.getBandagesLeft()<=0 || this.getHealthPoints()==0)
+		Server.log(getNickname() + " is attempting to use a bandage!");
+		if (this.getBandagesLeft() <= 0 || this.getHealthPoints() == 0){
+			Server.log(getNickname()+" failed using a bandage (either character is dead or no bandages left).");
 			return false;
-		
-		this.setHealthPoints(getHealthPoints()+25);
+		}
+		Server.log(getNickname() + " successfully used a bandage. (OldHP: " + getHealthPoints() + " new HP: "
+				+ (getHealthPoints() + 25) + " BND Left: " + (bandagesLeft - 1) + ")");
+		this.setHealthPoints(getHealthPoints() + 25);
 		this.bandagesLeft--;
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * @return character's id.
 	 */
 	public int getId() {
 		return id;
 	}
-	
+
 	/**
 	 * @return character's nickname.
 	 */
 	public String getNickname() {
 		return nickname;
 	}
-	
+
 	/**
 	 * @return character's level.
 	 */
 	public short getLevel() {
 		return level;
 	}
-	
+
 	/**
 	 * @return character's health points.
 	 */
 	public int getHealthPoints() {
 		return healthPoints;
 	}
-	
+
 	/**
 	 * @return true if alive, false otherwise.
 	 */
 	public boolean isAlive() {
 		return (healthPoints != 0);
 	}
-	
+
 	/**
 	 * @return character's physical damage.
 	 */
 	public int getPhysicalDamage() {
 		return physicalDamage;
 	}
-	
+
 	/**
 	 * @return character's magical damage.
 	 */
 	public int getMagicalDamage() {
 		return magicalDamage;
 	}
-	
+
 	/**
-	 * @param level level to be set.
+	 * @param level
+	 *            level to be set.
 	 * @return reference to this instance.
 	 */
 	public Character setLevel(short level) {
 		this.level = level;
 		return this;
 	}
-	
+
 	/**
-	 * @param hp health points to be set.
+	 * @param hp
+	 *            health points to be set.
 	 * @return reference to this instance.
 	 */
 	public Character setHealthPoints(int hp) {
 		this.healthPoints = hp;
 		return this;
 	}
-	
+
 	/**
-	 * @param physicalDamage physical damage to be set.
+	 * @param physicalDamage
+	 *            physical damage to be set.
 	 * @return reference to this instance.
 	 */
 	public Character setPhysicalDamage(int physicalDamage) {
 		this.physicalDamage = physicalDamage;
 		return this;
 	}
-	
+
 	/**
-	 * @param magicalDamage magical damage to be set.
+	 * @param magicalDamage
+	 *            magical damage to be set.
 	 * @return reference to this instance.
 	 */
 	public Character setMagicalDamage(int magicalDamage) {
@@ -148,10 +166,13 @@ public class Character {
 		return this;
 	}
 
-	public Integer getBandagesLeft(){
+	public Integer getBandagesLeft() {
 		return this.bandagesLeft;
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -162,7 +183,9 @@ public class Character {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -174,7 +197,7 @@ public class Character {
 		if (getClass() != obj.getClass())
 			return false;
 		Character other = (Character) obj;
-		if (id!=(other.id))
+		if (id != (other.id))
 			return false;
 		return true;
 	}
